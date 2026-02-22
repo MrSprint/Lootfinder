@@ -1,0 +1,230 @@
+-- [[ 1. STABILITY & AUTO-EXECUTE ]]
+repeat task.wait() until game:IsLoaded()
+
+-- [[ 2. PERMANENT SAVE SYSTEM ]]
+local HttpService = game:GetService("HttpService")
+local FileName = "LootFinder_Config.json"
+
+local function SaveConfig()
+    local data = HttpService:JSONEncode({
+        Target = _G.TargetAmount,
+        Keybind = _G.ToggleKey.Name
+    })
+    if writefile then writefile(FileName, data) end
+end
+
+local function LoadConfig()
+    if isfile and isfile(FileName) then
+        local success, data = pcall(function() return HttpService:JSONDecode(readfile(FileName)) end)
+        if success then 
+            _G.TargetAmount = tonumber(data.Target) or 4
+            _G.ToggleKey = Enum.KeyCode[data.Keybind or "Backquote"]
+            return
+        end
+    end
+    _G.TargetAmount = 4
+    _G.ToggleKey = Enum.KeyCode.Backquote
+end
+
+LoadConfig()
+_G.AutoHopping = true
+
+-- [[ 3. UI DESIGN ]]
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 250, 0, 310) 
+Main.Position = UDim2.new(0.5, -125, 0.4, 0)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Thickness = 2
+Stroke.Color = Color3.fromRGB(0, 150, 255)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Text = "TOOLBOX/LOCKER FINDER"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 16
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
+
+local function CreateLabel(text, pos, size)
+    local lbl = Instance.new("TextLabel", Main)
+    lbl.Size = UDim2.new(1, -20, 0, size or 25)
+    lbl.Position = pos
+    lbl.Text = text
+    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.Code
+    lbl.TextSize = 16
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    return lbl
+end
+
+-- TOOLBOX LABEL
+local ToolboxLabel = CreateLabel("TOOLBOXES: 0", UDim2.new(0, 15, 0, 45))
+
+-- [[ KEYBIND BUTTON - ALIGNED ON SAME LEVEL AS TOOLBOXES (FAR RIGHT) ]]
+local BindBtn = Instance.new("TextButton", Main)
+BindBtn.Size = UDim2.new(0, 75, 0, 22)
+BindBtn.Position = UDim2.new(1, -90, 0, 46) -- Exact level as "Toolboxes: 0"
+BindBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+BindBtn.Text = _G.ToggleKey.Name
+BindBtn.TextColor3 = Color3.fromRGB(0, 150, 255)
+BindBtn.Font = Enum.Font.SourceSansBold
+BindBtn.TextSize = 12
+Instance.new("UICorner", BindBtn).CornerRadius = UDim.new(0, 4)
+
+local LockerLabel  = CreateLabel("LOCKERS: 0", UDim2.new(0, 15, 0, 70))
+local TotalLabel   = CreateLabel("TOTAL COUNT: 0", UDim2.new(0, 15, 0, 95))
+local StatusLabel  = CreateLabel("STATUS: IDLE", UDim2.new(0, 15, 0, 155))
+
+local TargetInput = Instance.new("TextBox", Main)
+TargetInput.Size = UDim2.new(0, 50, 0, 25)
+TargetInput.Position = UDim2.new(0, 115, 0, 125)
+TargetInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TargetInput.TextColor3 = Color3.new(1, 1, 1)
+TargetInput.Text = tostring(_G.TargetAmount)
+TargetInput.Font = Enum.Font.Code
+TargetInput.TextSize = 16
+CreateLabel("SET TARGET:", UDim2.new(0, 15, 0, 125))
+Instance.new("UICorner", TargetInput).CornerRadius = UDim.new(0, 4)
+
+local ActionBtn = Instance.new("TextButton", Main)
+ActionBtn.Size = UDim2.new(0, 210, 0, 35)
+ActionBtn.Position = UDim2.new(0.5, -105, 1, -105) 
+ActionBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ActionBtn.Text = "STOP"
+ActionBtn.TextColor3 = Color3.new(1, 1, 1)
+ActionBtn.Font = Enum.Font.SourceSansBold
+ActionBtn.TextSize = 18
+Instance.new("UICorner", ActionBtn).CornerRadius = UDim.new(0, 4)
+
+local Instruct = CreateLabel("Click right button to change bind.", UDim2.new(0, 0, 1, -65), 20)
+Instruct.TextXAlignment = Enum.TextXAlignment.Center
+Instruct.TextSize = 12
+Instruct.TextColor3 = Color3.fromRGB(180, 180, 180)
+
+local SaveInstruct = CreateLabel("Settings save automatically.", UDim2.new(0, 0, 1, -50), 15)
+SaveInstruct.TextXAlignment = Enum.TextXAlignment.Center
+SaveInstruct.TextSize = 11
+SaveInstruct.TextColor3 = Color3.fromRGB(0, 150, 255)
+
+-- [[ CENTERED SIGNATURE BAR ]]
+local CreditBar = Instance.new("Frame", Main)
+CreditBar.Size = UDim2.new(1, 0, 0, 32)
+CreditBar.Position = UDim2.new(0, 0, 1, -32)
+CreditBar.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+CreditBar.BorderSizePixel = 0
+Instance.new("UICorner", CreditBar).CornerRadius = UDim.new(0, 8)
+
+local CreditLabel = Instance.new("TextLabel", CreditBar)
+CreditLabel.Size = UDim2.new(1, 0, 1, 0)
+CreditLabel.Text = "MADE BY ELVARON"
+CreditLabel.TextColor3 = Color3.fromRGB(0, 150, 255)
+CreditLabel.BackgroundTransparency = 1
+CreditLabel.Font = Enum.Font.GothamBold
+CreditLabel.TextSize = 14
+CreditLabel.TextXAlignment = Enum.TextXAlignment.Center -- Centered as requested
+
+-- [[ KEYBIND LOGIC ]]
+local picking = false
+BindBtn.MouseButton1Click:Connect(function()
+    picking = true
+    BindBtn.Text = "..."
+end)
+
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if picking and input.UserInputType == Enum.UserInputType.Keyboard then
+        _G.ToggleKey = input.KeyCode
+        BindBtn.Text = input.KeyCode.Name
+        picking = false
+        SaveConfig()
+    elseif not picking and input.KeyCode == _G.ToggleKey then
+        Main.Visible = not Main.Visible
+    end
+end)
+
+TargetInput.FocusLost:Connect(function()
+    _G.TargetAmount = tonumber(TargetInput.Text) or 4
+    SaveConfig()
+end)
+
+-- [[ 4. SCAN & PLAYAGAIN LOGIC ]]
+local function scan()
+    local t, l = 0, 0
+    local room0 = workspace:FindFirstChild("CurrentRooms") and workspace.CurrentRooms:FindFirstChild("0")
+    local assets = room0 and room0:FindFirstChild("Assets")
+    if assets then
+        for _, item in pairs(assets:GetChildren()) do
+            if item.Name == "Toolbox_Locked" then t = t + 1
+            elseif item.Name == "Locker_Small_Locked" then l = l + 1 end
+        end
+    end
+    return t, l
+end
+
+local function runAutomation()
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local loadingUI = playerGui:FindFirstChild("LoadingUI")
+    if loadingUI and loadingUI.Enabled then
+        StatusLabel.Text = "STATUS: WAITING..."
+        repeat task.wait(0.1) until loadingUI.Enabled == false
+    end
+    task.wait(1)
+    
+    while _G.AutoHopping do
+        StatusLabel.Text = "STATUS: SCANNING..."
+        local t, l = scan()
+        local total = t + l
+        ToolboxLabel.Text = "TOOLBOXES: " .. t
+        LockerLabel.Text  = "LOCKERS: " .. l
+        TotalLabel.Text   = "TOTAL COUNT: " .. total
+        
+        if total >= _G.TargetAmount then
+            StatusLabel.Text = (total > _G.TargetAmount) and "STATUS: BETTER LOOT!" or "STATUS: TARGET MET!"
+            TotalLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+            ActionBtn.Text = "START"
+            _G.AutoHopping = false
+            break
+        else
+            TotalLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+            StatusLabel.TextColor3 = Color3.new(1, 1, 1)
+            for i = 5, 1, -1 do
+                if not _G.AutoHopping then return end
+                ActionBtn.Text = "HOPPING IN " .. i .. "s (STOP)"
+                task.wait(1)
+            end
+            
+            if _G.AutoHopping then
+                local remote = game:GetService("ReplicatedStorage"):FindFirstChild("RemotesFolder") and game:GetService("ReplicatedStorage").RemotesFolder:FindFirstChild("PlayAgain")
+                if remote then 
+                    remote:FireServer() 
+                    break 
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end
+
+-- [[ 5. TOGGLES ]]
+ActionBtn.MouseButton1Click:Connect(function()
+    if _G.AutoHopping then
+        _G.AutoHopping = false
+        ActionBtn.Text = "START"
+        StatusLabel.Text = "STATUS: STOPPED"
+    else
+        _G.AutoHopping = true
+        ActionBtn.Text = "STOP"
+        task.spawn(runAutomation)
+    end
+end)
+
+task.spawn(runAutomation)
